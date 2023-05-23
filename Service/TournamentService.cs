@@ -14,40 +14,40 @@ public class TournamentService : ITournamentService
 		_dbContext = dbContext;
 		_logger = logger;
 	}
-
-	public List<Player> GetAllPlayers(Team team)
+	#region PLAYER
+	public async Task<List<Player>> GetAllPlayers(Team team)
 	{
-		var players = _dbContext.Players.Where(p => p.TeamName == team.Name).ToList();
+		var players = await _dbContext.Players.Where(p => p.TeamName == team.Name).ToListAsync();
 		return players;
 	}
 
-	public List<Player> FetchPlayers()
+	public async Task<List<Player>> FetchPlayers()
 	{
 
-		var players = _dbContext.Players.ToList();
+		var players = await _dbContext.Players.ToListAsync();
 		return players;
 	}
 
-	public void DeletePlayer(Player player)
+	public async Task DeletePlayer(Player player)
 	{
-		var element = _dbContext.Players.FirstOrDefault(i => i.Name == player.Name);
+		var element = await _dbContext.Players.FirstOrDefaultAsync(i => i.Name == player.Name);
 
 		if (element != null)
-		{
+		{ 
 			_dbContext.Players.Remove(element);
-			_dbContext.SaveChanges();
+			await _dbContext.SaveChangesAsync();
 		}
 	}
 
-	public void UpdatePlayer(Player player)
+	public async Task UpdatePlayer(Player player)
 	{
-		var existingPlayer = _dbContext.Players.FirstOrDefault(p => p.Name == player.Name);
+		var existingPlayer = await _dbContext.Players.FirstOrDefaultAsync(p => p.Name == player.Name);
 		if (existingPlayer == null)
 		{
 			throw new Exception("Player not found!");
 		}
 
-		var team = _dbContext.Teams.FirstOrDefault(i => i.Name == player.TeamName);
+		var team = await _dbContext.Teams.FirstOrDefaultAsync(i => i.Name == player.TeamName);
 		if (team == null)
 		{
 			throw new Exception("Team not found!");
@@ -58,18 +58,18 @@ public class TournamentService : ITournamentService
 		existingPlayer.Team = team;
 		existingPlayer.TeamName = team.Name;
 
-		_dbContext.SaveChanges();
+		await _dbContext.SaveChangesAsync();
 	}
 
-	public void AddPlayer(Player player)
+	public async Task AddPlayer(Player player)
 	{
-		bool isItemNameTaken = _dbContext.Players.Any(i => i.Name == player.Name);
+		bool isItemNameTaken = await _dbContext.Players.AnyAsync(i => i.Name == player.Name);
 		if (isItemNameTaken)
 		{
 			throw new Exception($"Player with name '{player.Name}' already exists!");
 		}
 
-		Team team = _dbContext.Teams.FirstOrDefault(i => i.Name == player.TeamName);
+		Team team = await _dbContext.Teams.FirstOrDefaultAsync(i => i.Name == player.TeamName);
 		if (team == null)
 		{
 			throw new Exception("Team not found!");
@@ -81,23 +81,25 @@ public class TournamentService : ITournamentService
 		if (player.TeamId == null)
 			player.TeamId = team.TeamId;
 
-		_dbContext.Players.Add(player);
-		_dbContext.SaveChanges();
+		await _dbContext.Players.AddAsync(player);
+		await _dbContext.SaveChangesAsync();
 	}
-	public List<Team> FetchTeams()
+#endregion
+	#region TEAMS
+	public async Task<List<Team>> FetchTeams()
 	{
-		var teams = _dbContext.Teams.OrderByDescending(t => t.Points).ToList();
+		var teams =await _dbContext.Teams.OrderByDescending(t => t.Points).ToListAsync();
 		return teams;
 	}
 
-	public void DeleteTeam(Team team)
+	public async Task DeleteTeam(Team team)
 	{
-		var element = _dbContext.Teams.FirstOrDefault(i => i.Name == team.Name);
+		var element = await _dbContext.Teams.FirstOrDefaultAsync(i => i.Name == team.Name);
 
 		if (element != null)
 		{
 			var matches = _dbContext.Matches.Where(m => m.HomeTeamId == element.TeamId || m.AwayTeamId == element.TeamId);
-			var teamm = _dbContext.Teams.First(i => i.Name != team.Name);
+			var teamm = await _dbContext.Teams.FirstAsync(i => i.Name != team.Name);
 			if (team.Players != null)
 			{
 				// Remove the players associated with the team
@@ -107,35 +109,35 @@ public class TournamentService : ITournamentService
 					player.TeamId = teamm.TeamId;
 					player.Team = teamm;
 					_dbContext.Update(player);
-					_dbContext.SaveChanges();
+					await _dbContext.SaveChangesAsync();
 				}
 			}
 
 			_dbContext.Matches.RemoveRange(matches);
 			element.Players = null;
-			_dbContext.SaveChanges(true);
+			await _dbContext.SaveChangesAsync(true);
 
 			foreach (var fteam in _dbContext.Teams)
 			{
 				fteam.Points = 0;
 			}
-			_dbContext.SaveChanges(true);
+			await _dbContext.SaveChangesAsync(true);
 
 			foreach (var matche in _dbContext.Matches)
 			{
-				GetPoints(matche.HomeTeamName, matche.AwayTeamName, matche.WhoWon);
+				await GetPoints(matche.HomeTeamName, matche.AwayTeamName, matche.WhoWon);
 			}
 
 			_dbContext.Teams.Remove(element);
 
 			// Perform other necessary operations
 
-			_dbContext.SaveChanges(true);
+			await _dbContext.SaveChangesAsync(true);
 		}
 	}
-	public void UpdateTeam(Team team)
+	public async Task UpdateTeam(Team team)
 	{
-		var existingTeam = _dbContext.Teams.FirstOrDefault(t => t.TeamId == team.TeamId);
+		var existingTeam =await _dbContext.Teams.FirstOrDefaultAsync(t => t.TeamId == team.TeamId);
 		if (existingTeam == null)
 		{
 			throw new Exception("Team not found!");
@@ -171,12 +173,12 @@ public class TournamentService : ITournamentService
 		_dbContext.Attach(existingTeam);
 		_dbContext.Update(existingTeam);
 
-		_dbContext.SaveChanges();
+		await _dbContext.SaveChangesAsync();
 	}
 
-	public void AddTeam(Team team)
+	public async Task AddTeam(Team team)
 	{
-		bool isItemNameTaken = _dbContext.Teams.Any(i => i.Name == team.Name);
+		bool isItemNameTaken = await _dbContext.Teams.AnyAsync(i => i.Name == team.Name);
 		if (isItemNameTaken)
 		{
 			throw new Exception($"Team with name '{team.Name}' already exists!");
@@ -197,22 +199,24 @@ public class TournamentService : ITournamentService
 			{
 				team.Points = 0;
 			}
-			_dbContext.Teams.Add(team);
-			_dbContext.SaveChanges();
+			await _dbContext.Teams.AddAsync(team);
+			await _dbContext.SaveChangesAsync();
 		}
 	}
-	public List<Match> GetFixtures()
+#endregion
+	#region Fixtures
+	public async Task<List<Match>> GetFixtures()
 	{
-		var fixtures = _dbContext.Matches.ToList();
+		var fixtures = await _dbContext.Matches.ToListAsync();
 		return fixtures;
 	}
 
-	public void GenerateFixtures()
+	public async Task GenerateFixtures()
 	{
-		_dbContext.Matches.ExecuteDelete();
-		_dbContext.SaveChanges();
+		await _dbContext.Matches.ExecuteDeleteAsync();
+		await _dbContext.SaveChangesAsync();
 
-		var teams = _dbContext.Teams.ToList();
+		var teams =await _dbContext.Teams.ToListAsync();
 		var totalTeams = teams.Count;
 
 		foreach (var team in teams)
@@ -245,17 +249,17 @@ public class TournamentService : ITournamentService
 				};
 				match.WhoWon = Winner(match);
 				fixtures.Add(match);
-				GetPoints(homeTeam.Name, awayTeam.Name, match.WhoWon);
+				await GetPoints(homeTeam.Name, awayTeam.Name, match.WhoWon);
 			}
 		}
 
-		_dbContext.Matches.AddRange(fixtures);
-		_dbContext.SaveChanges();
+		await _dbContext.Matches.AddRangeAsync(fixtures);
+		await _dbContext.SaveChangesAsync();
 	}
 
-	public void UpdateFixtureGoals(Match request)
+	public async Task UpdateFixtureGoals(Match request)
 	{
-		var existingFixture = _dbContext.Matches.FirstOrDefault(f => f.Id == request.Id);
+		var existingFixture =await _dbContext.Matches.FirstOrDefaultAsync(f => f.Id == request.Id);
 		if (existingFixture == null)
 		{
 
@@ -271,21 +275,22 @@ public class TournamentService : ITournamentService
 		existingFixture.AwayTeamGoals = request.AwayTeamGoals;
 		int previouswinner = existingFixture.WhoWon;
 		int whoWin = Winner(request);
-		GetPointsEdit(existingFixture.HomeTeamName, existingFixture.AwayTeamName, whoWin, previouswinner);
+		await  GetPointsEdit(existingFixture.HomeTeamName, existingFixture.AwayTeamName, whoWin, previouswinner);
 
 		// Save changes to the database
-		_dbContext.SaveChanges();
+		await _dbContext.SaveChangesAsync();
 	}
+	#endregion
 	#region HelpMETHODSFixture
 	private int GenerateRandomGoals()
 	{
 		Random random = new Random();
 		return random.Next(0, 6);
 	}
-	public void GetPoints(string Team1, string Team2, int winner)
+	public async Task GetPoints(string Team1, string Team2, int winner)
 	{
-		var team1 = _dbContext.Teams.SingleOrDefault(b => b.Name == Team1);
-		var team2 = _dbContext.Teams.SingleOrDefault(b => b.Name == Team2);
+		var team1 = await _dbContext.Teams.SingleOrDefaultAsync(b => b.Name == Team1);
+		var team2 = await _dbContext.Teams.SingleOrDefaultAsync(b => b.Name == Team2);
 		if (winner == 1)
 		{
 			team1.Points += 3;
@@ -300,45 +305,40 @@ public class TournamentService : ITournamentService
 			team2.Points += 1;
 		}
 
-		_dbContext.SaveChanges();
+		await _dbContext.SaveChangesAsync();
 	}
-	public void GetPointsEdit(string Team1, string Team2, int winner, int previouswinner)
+	public async Task GetPointsEdit(string Team1, string Team2, int winner, int previouswinner)
 	{
-		var team1 = _dbContext.Teams.SingleOrDefault(b => b.Name == Team1);
-		var team2 = _dbContext.Teams.SingleOrDefault(b => b.Name == Team2);
+		var team1 = await _dbContext.Teams.SingleOrDefaultAsync(b => b.Name == Team1);
+		var team2 = await _dbContext.Teams.SingleOrDefaultAsync(b => b.Name == Team2);
 		if (previouswinner == 1)
 		{
 			team1.Points -= 3;
-			_dbContext.SaveChanges();
 		}
 		else if (previouswinner == 2)
 		{
 			team2.Points -= 3;
-			_dbContext.SaveChanges();
 		}
 		else
 		{
 			team1.Points -= 1;
 			team2.Points -= 1;
-			_dbContext.SaveChanges();
 		}
-
+		await _dbContext.SaveChangesAsync();
 		if (winner == 1)
 		{
 			team1.Points += 3;
-			_dbContext.SaveChanges();
 		}
 		else if (winner == 2)
 		{
 			team2.Points += 3;
-			_dbContext.SaveChanges();
 		}
 		else
 		{
 			team1.Points += 1;
 			team2.Points += 1;
-			_dbContext.SaveChanges();
 		}
+		await _dbContext.SaveChangesAsync();
 
 	}
 	public int Winner(Match match)

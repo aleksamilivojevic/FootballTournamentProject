@@ -22,9 +22,9 @@ namespace MerkatorS.Controllers
 			_logger = logger;
 		}
 
-		public Administrator Login(string username, string password)
+		public async Task<Administrator> Login(string username, string password)
 		{
-			var user = _dbContext.Administrators.FirstOrDefault(u => u.Username == username && u.Password == password);
+			var user = await _dbContext.Administrators.FirstOrDefaultAsync(u => u.Username == username && u.Password == password);
 
 			if (user != null)
 			{

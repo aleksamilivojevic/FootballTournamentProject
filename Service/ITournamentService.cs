@@ -3,19 +3,19 @@ using MerkatorS.Models;
 
 public interface ITournamentService
 {
-	List<Player> GetAllPlayers(Team team);
-	List<Player> FetchPlayers();
-	void UpdatePlayer(Player player);
-	void AddPlayer(Player player);
-	void DeletePlayer(Player player);
+	Task<List<Player>> GetAllPlayers(Team team);
+	Task<List<Player>> FetchPlayers();
+	Task UpdatePlayer(Player player);
+	Task AddPlayer(Player player);
+	Task DeletePlayer(Player player);
 
-	List<Team> FetchTeams();
-	void UpdateTeam(Team team);
-	void AddTeam(Team team);
-	void DeleteTeam(Team team);
+	Task<List<Team>> FetchTeams();
+	Task UpdateTeam(Team team);
+	Task AddTeam(Team team);
+	Task DeleteTeam(Team team);
 
-	List<Match> GetFixtures();
-	void GenerateFixtures();
-	void UpdateFixtureGoals(Match match);
+	Task<List<Match>> GetFixtures();
+	Task GenerateFixtures();
+	Task UpdateFixtureGoals(Match match);
 
 }

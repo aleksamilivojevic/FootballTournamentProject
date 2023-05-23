@@ -3,7 +3,7 @@
 
 	public interface IAdministratorService
 	{
-		Administrator Login(string username, string password);
+		Task<Administrator> Login(string username, string password);
 	}
 
 

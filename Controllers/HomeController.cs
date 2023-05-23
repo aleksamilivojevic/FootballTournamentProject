@@ -51,7 +51,7 @@ namespace MerkatorS.Controllers
 		{
 			if (ModelState.IsValid)
 			{
-				var user = _administratorService.Login(model.Username,model.Password);
+				var user = await _administratorService.Login(model.Username,model.Password);
 
 				if (user != null)
 				{
@@ -89,26 +89,26 @@ namespace MerkatorS.Controllers
 		#region PLAYER
 
 		[HttpPost]
-		public IActionResult GetAllPlayers([FromBody] Team team)
+		public async Task<IActionResult> GetAllPlayers([FromBody] Team team)
 		{
-			var players = _tournamentService.GetAllPlayers(team);
+			var players = await _tournamentService.GetAllPlayers(team);
 
 			return Json(players);
 		}
 
 		[HttpGet]
-		public IActionResult FetchPlayers()
+		public async Task<IActionResult> FetchPlayers()
 		{
-			var players = _tournamentService.FetchPlayers();
+			var players = await _tournamentService.FetchPlayers();
 			return Ok(players);
 		}
 
 		[HttpPost]
-		public IActionResult UpdatePlayer([FromBody] Player player)
+		public async Task<IActionResult> UpdatePlayer([FromBody] Player player)
 		{
 			if (ModelState.IsValid)
 			{
-				_tournamentService.UpdatePlayer(player);
+				await _tournamentService.UpdatePlayer(player);
 				return Ok(new { message = "Player updated successfully!" });
 			}
 
@@ -116,11 +116,11 @@ namespace MerkatorS.Controllers
 		}
 
 		[HttpPost]
-		public IActionResult AddPlayer([FromBody] Player player)
+		public async Task<IActionResult> AddPlayer([FromBody] Player player)
 		{
 			if (ModelState.IsValid)
 			{
-				_tournamentService.AddPlayer(player);
+				await _tournamentService.AddPlayer(player);
 
 				return Ok(new { message = "Player added successfully!" });
 
@@ -130,11 +130,11 @@ namespace MerkatorS.Controllers
 		}
 
 		[HttpPost]
-		public IActionResult DeletePlayer([FromBody] Player player)
+		public async Task<IActionResult> DeletePlayer([FromBody] Player player)
 		{
 			if (ModelState.IsValid)
 			{
-				_tournamentService.DeletePlayer(player);
+				await _tournamentService.DeletePlayer(player);
 				return Ok();
 			}
 
@@ -145,28 +145,28 @@ namespace MerkatorS.Controllers
 
 		#region TEAM
 
-		public IActionResult AddTeams([FromBody] Team team)
+		public async Task<IActionResult> AddTeams([FromBody] Team team)
 		{
 			if (ModelState.IsValid)
 			{
-				_tournamentService.AddTeam(team);
+				await _tournamentService.AddTeam(team);
 				return Ok(team);
 			}
 			return BadRequest(ModelState);
 		}
 		[HttpGet]
-		public IActionResult FetchTeams()
+		public async Task<IActionResult> FetchTeams()
 		{
-			var teams = _tournamentService.FetchTeams();
+			var teams = await _tournamentService.FetchTeams();
 			return Ok(teams);
 		}
 
 		[HttpPost]
-		public IActionResult UpdateTeam([FromBody] Team team)
+		public async Task<IActionResult> UpdateTeam([FromBody] Team team)
 		{
 			if (ModelState.IsValid)
 			{
-				_tournamentService.UpdateTeam(team);
+				await _tournamentService.UpdateTeam(team);
 
 				return Ok(new { message = "Team updated successfully!" });
 			}
@@ -174,11 +174,11 @@ namespace MerkatorS.Controllers
 			return BadRequest(new { message = "Invalid input! Please provide valid team information." });
 		}
 		[HttpPost]
-		public IActionResult DeleteTeams([FromBody] Team team)
+		public async Task<IActionResult> DeleteTeams([FromBody] Team team)
 		{
 			if (ModelState.IsValid)
 			{
-				_tournamentService.DeleteTeam(team);
+				await _tournamentService.DeleteTeam(team);
 				return Ok();
 			}
 			return BadRequest(ModelState);
@@ -192,11 +192,11 @@ namespace MerkatorS.Controllers
 		#region FIXTURE
 
 		[HttpPost]
-		public IActionResult GenerateFixtures()
+		public async Task<IActionResult> GenerateFixtures()
 		{
 			try
 			{
-				_tournamentService.GenerateFixtures();
+				await _tournamentService.GenerateFixtures();
 				return Ok();
 			}
 			catch
@@ -205,19 +205,18 @@ namespace MerkatorS.Controllers
 			}
 
 		}
-		public IActionResult GetFixtures()
+		public async Task<IActionResult> GetFixtures()
 		{
-			var fixtures = _tournamentService.GetFixtures();
+			var fixtures = await _tournamentService.GetFixtures();
 
 			return Json(fixtures);
 		}
 		[HttpPost]
-		public IActionResult UpdateFixtureGoals([FromBody] Match request)
+		public async Task<IActionResult> UpdateFixtureGoals([FromBody] Match request)
 		{
 			if (ModelState.IsValid)
 			{
-				// Retrieve the fixture from the database by its ID
-				_tournamentService.UpdateFixtureGoals(request);
+				await _tournamentService.UpdateFixtureGoals(request);
 				return Ok(new { message = "Fixture goals updated successfully!" });
 			}
 
