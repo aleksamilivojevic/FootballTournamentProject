@@ -1,0 +1,247 @@
+﻿@{
+	ViewData["Title"] = "Football Tournament";
+	Layout = null;
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Football Tournament</title>
+	
+</head>
+<body>
+	<header>
+		<nav>
+			
+			<ul>
+				<li class="login-button"><a href="/Home/Login">Login</a></li>
+			</ul>
+		</nav>
+	</header>
+
+	<main>
+		<table id="teams-table">
+			<thead>
+				<tr>
+					<th>Team Name</th>
+					<th>Points</th>
+				</tr>
+			</thead>
+			<tbody id="teams-table-body">
+				<!-- Team rows will be dynamically added here -->
+			</tbody>
+		</table>
+		<div id="fixtures-list"></div>
+	</main>
+	<script>
+		var teams = [];
+
+		function fetchTeams() {
+			fetch('/Home/FetchTeams') // Replace with the actual URL of your backend API endpoint
+				.then(response => response.json())
+				.then(data => {
+					teams = data; // Update the teams array with the fetched data
+					displayTeams(); // Call the displayTeams function to render the teams
+				})
+				.catch(error => {
+					console.error('Error:', error);
+					alert('An error occurred while fetching teams.');
+				});
+		}
+		function displayTeams() {
+
+			var teamsTableBody = document.getElementById("teams-table-body");
+
+			// Clear existing table rows
+			teamsTableBody.innerHTML = "";
+
+			// Generate table rows for each team
+			teams.forEach(function (team) {
+				var row = document.createElement("tr");
+				var nameCell = document.createElement("td");
+
+				nameCell.textContent = team.name;
+
+				row.appendChild(nameCell);
+
+				var pointsCell = document.createElement("td");
+				pointsCell.textContent = team.points;
+				row.appendChild(pointsCell);
+
+				teamsTableBody.appendChild(row);
+			});
+		}
+
+		fetchTeams();
+
+		// Function to fetch fixtures data from the server
+		function getFixtures() {
+			fetch('/Home/GetFixtures') // Replace with the actual route to your controller method
+				.then(response => response.json())
+				.then(data => {
+					// Handle the response data and render the fixtures list
+					renderFixtures(data);
+				})
+				.catch(error => {
+					console.error('Error:', error);
+					alert('An error occurred while fetching fixtures data.');
+				});
+		}
+
+		function renderFixtures(fixtures) {
+			var fixturesList = document.getElementById('fixtures-list');
+
+			// Clear the existing content
+			fixturesList.innerHTML = '';
+
+			// Loop through the fixtures data and create HTML elements
+			fixtures.forEach(fixture => {
+				var fixtureItem = document.createElement('div');
+				fixtureItem.classList.add('fixture-item');
+
+				var team1 = document.createElement('span');
+				team1.textContent = fixture.homeTeamName;
+
+				var team1Goals = document.createElement('span');
+				team1Goals.textContent = fixture.homeTeamGoals;
+
+				var team2Goals = document.createElement('span');
+				team2Goals.textContent = fixture.awayTeamGoals;
+
+				var team2 = document.createElement('span');
+				team2.textContent = fixture.awayTeamName;
+
+				fixtureItem.appendChild(team1);
+				fixtureItem.appendChild(team1Goals);
+				fixtureItem.appendChild(team2Goals);
+				fixtureItem.appendChild(team2);
+
+				fixturesList.appendChild(fixtureItem);
+			});
+		}
+
+		getFixtures();
+	</script>
+</body>
+</html>
+<style>
+	header {
+		background-color: #f2f2f2;
+		padding: 20px;
+	}
+
+	nav ul {
+		list-style-type: none;
+		margin: 0;
+		padding: 0;
+		overflow: hidden;
+	}
+
+	nav li {
+		float: right;
+	}
+
+		nav li a {
+			display: block;
+			color: #333;
+			text-align: center;
+			padding: 14px 16px;
+			text-decoration: none;
+		}
+
+		nav li.login-button {
+			float: right;
+		}
+
+	main {
+		padding: 20px;
+	}
+
+	/* Styles for the table */
+	#teams-table {
+		border-collapse: collapse;
+		width: 100%;
+		margin-bottom: 20px;
+	}
+
+		#teams-table th {
+			background-color: #f2f2f2;
+			color: #333;
+			font-weight: bold;
+			padding: 10px;
+			text-align: left;
+		}
+
+		#teams-table td {
+			padding: 10px;
+			border-bottom: 1px solid #ddd;
+		}
+
+		#teams-table tbody tr:hover {
+			background-color: #f9f9f9;
+		}
+
+	body {
+		font-family: Arial, sans-serif;
+	}
+
+	/* Navigation styles */
+	nav ul {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+	}
+
+	nav li {
+		display: inline-block;
+		margin-right: 10px;
+	}
+
+		nav li a {
+			padding: 10px;
+			font-size: 16px;
+			background-color: #4285f4;
+			color: #fff;
+			text-decoration: none;
+			border-radius: 4px;
+		}
+
+			nav li a:hover {
+				background-color: #1a73e8;
+			}
+
+	#fixtures-list {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		border-collapse: collapse;
+		margin-top: 20px;
+	}
+
+	.fixture-item {
+		display: flex;
+		justify-content: space-between;
+		width: 300px;
+		padding: 10px;
+		border: 1px solid #ccc;
+		margin-bottom: 10px;
+	}
+
+		.fixture-item span {
+			width: 25%;
+			text-align: center;
+		}
+
+			.fixture-item span:nth-child(1),
+			.fixture-item span:nth-child(4) {
+				font-weight: bold;
+			}
+
+			.fixture-item span:nth-child(2),
+			.fixture-item span:nth-child(3) {
+				background-color: #f2f2f2;
+				padding: 5px;
+			}
+
+
+</style>

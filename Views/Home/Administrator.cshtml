@@ -1,0 +1,933 @@
+﻿@{
+	ViewData["Title"] = "Admin Page";
+	Layout = null;
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Admin Page</title>
+
+</head>
+<body>
+	<main>
+		<button id="teams-btn">Teams</button>
+		<button id="players-btn">Players</button>
+		<button id="fixtures-btn">Fixtures</button>
+		<button id="sign-out-btn" class="sign-out-btn"><a href="/Home/Logout">Sign Out</a></button>
+
+		<div id="teams-section" class="section">
+			<h2>Teams</h2>
+			<button id="add-team-btn">Add New Team</button>
+			<div id="add-team-form" style="display: none;">
+				<h3>Add New Team</h3>
+				<form id="new-team-form">
+					<label for="team-name">Team Name:</label>
+					<input type="text" id="team-name" name="team-name" required><br>
+
+					<input type="submit" value="Add Team">
+				</form>
+			</div>
+			<div id="edit-team-form" style="display: none;">
+				<h3>Edit Team</h3>
+				<form id="team-edit-form">
+					<label for="team-namee">New Team Name:</label>
+					<input type="text" id="team-namee" required>
+					<button type="submit">Save</button>
+				</form>
+			</div>
+
+			<table id="teams-table">
+				<thead>
+					<tr>
+						<th>Team Name</th>
+						<th>Points</th>
+					</tr>
+				</thead>
+				<tbody id="teams-table-body">
+				</tbody>
+			</table>
+
+		</div>
+
+		<div id="players-section" class="section">
+			<h2>Players</h2>
+			<button id="add-player-btn">Add New Player</button>
+			<div id="add-player-form" style="display: none;">
+				<h3>Add New Player</h3>
+				<form id="new-player-form">
+					<label for="player-name">Player Name:</label>
+					<input type="text" id="player-name" name="player-name" required><br>
+					<label for="team-select">Select a Team:</label>
+					<select id="team-select">
+					</select>
+					<input type="submit" value="Add Player">
+				</form>
+			</div>
+			<div id="edit-player-form" style="display: none;">
+				<h3>Edit Player</h3>
+				<label for="player-namee">Player Name:</label>
+				<span id="player-namee"></span>
+				<label for="team-selectt">Select Team:</label>
+				<select id="team-selectt">
+				</select>
+				<button id="save-player-btn">Save</button>
+			</div>
+			<table id="players-table">
+				<thead>
+					<tr>
+						<th>Player Name</th>
+						<th>Player Club</th>
+					</tr>
+				</thead>
+				<tbody id="players-table-body">
+				</tbody>
+			</table>
+		</div>
+
+		<div id="fixtures-section" class="section">
+			<button id="generate-fixtures-btn">Generate Fixtures</button>
+			<div id="edit-fixture-form" style="display: none;">
+				<h3>Edit Player</h3>
+				<form id="fixture-edit-form">
+				<label for="home-goals">HomeTeam Goals:</label>
+				<input type="number" id="home-goals" required>
+				<label for="away-goals">AwayTeam Goals:</label>
+				<input type="number" id="away-goals" required>
+				
+				<button id="save-fixture-btn">Save</button>
+				</form>
+			</div>
+			<div id="fixtures-list"></div>
+		</div>
+	</main>
+	<script>
+		document.getElementById("teams-btn").addEventListener("click", function () {
+			showSection("teams-section");
+
+			document.getElementById("add-team-form").style.display = "none";
+			document.getElementById("edit-team-form").style.display = "none";
+		});
+
+		document.getElementById("players-btn").addEventListener("click", function () {
+			showSection("players-section");
+
+			document.getElementById("add-player-form").style.display = "none";
+			document.getElementById("edit-player-form").style.display = "none";
+		});
+
+		document.getElementById("fixtures-btn").addEventListener("click", function () {
+			showSection("fixtures-section");
+
+
+			document.getElementById("edit-fixture-form").style.display = "none";
+		});
+
+		document.getElementById("add-team-btn").addEventListener("click", function () {
+			showAddTeamForm();
+		});
+
+		document.getElementById("add-player-btn").addEventListener("click", function () {
+			showAddPlayerForm();
+		});
+
+		document.getElementById("new-team-form").addEventListener("submit", function (e) {
+			e.preventDefault();
+			addTeam();
+		});
+
+		document.getElementById("new-player-form").addEventListener("submit", function (e) {
+			e.preventDefault();
+
+			addPlayer();
+		});
+
+		function showSection(sectionId) {
+			var sections = document.getElementsByClassName("section");
+			for (var i = 0; i < sections.length; i++) {
+				sections[i].style.display = "none";
+			}
+
+			document.getElementById(sectionId).style.display = "block";
+		}
+
+		//		TEAMS
+		var teams = [];
+
+		function fetchTeams() {
+			fetch('/Home/FetchTeams')
+				.then(response => response.json())
+				.then(data => {
+					teams = data;
+					displayTeams();
+				})
+				.catch(error => {
+					console.error('Error:', error);
+					alert('An error occurred while fetching teams.');
+				});
+		}
+		function displayTeams() {
+
+			var teamsTableBody = document.getElementById("teams-table-body");
+
+			teamsTableBody.innerHTML = "";
+
+			teams.forEach(function (team) {
+				var row = document.createElement("tr");
+				var nameCell = document.createElement("td");
+
+				nameCell.textContent = team.name;
+
+				row.appendChild(nameCell);
+
+				var pointsCell = document.createElement("td");
+				pointsCell.textContent = team.points;
+				row.appendChild(pointsCell);
+
+				var actionsCell = document.createElement("td");
+				var editButton = document.createElement("button");
+				editButton.textContent = "Edit";
+				editButton.addEventListener("click", function () {
+					invokeEditTeam(team);
+				});
+				actionsCell.appendChild(editButton);
+
+				var deleteButton = document.createElement("button");
+				deleteButton.textContent = "Delete";
+				deleteButton.addEventListener("click", function () {
+					invokeDeleteTeam(team);
+				});
+				actionsCell.appendChild(deleteButton);
+
+				var previewButton = document.createElement("button");
+				previewButton.textContent = "Preview";
+				previewButton.addEventListener("click", function () {
+					invokePreviewTeam(team);
+				});
+				actionsCell.appendChild(previewButton);
+
+				row.appendChild(actionsCell);
+
+				teamsTableBody.appendChild(row);
+			});
+		}
+
+		fetchTeams();
+
+		function showAddTeamForm() {
+			document.getElementById("add-team-form").style.display = "block";
+		}
+		function addTeam() {
+			var teamNameInput = document.getElementById("team-name");
+
+			var newTeam = {
+				name: teamNameInput.value,
+			};
+
+			if (!teamNameInput.checkValidity()) {
+				return;
+			}
+
+			fetch('/Home/AddTeams', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify(newTeam)
+			})
+				.then(response => response.json())
+				.then(data => {
+					alert("Team added successfully: " + JSON.stringify(data));
+
+					teamNameInput.value = "";
+
+					document.getElementById("add-team-form").style.display = "none";
+
+					displayTeams();
+				})
+				.catch(error => {
+					console.error('Error:', error);
+					alert('An error occurred while adding the team.');
+				});
+		}
+
+		function invokeDeleteTeam(team) {
+
+			fetch('/Home/DeleteTeams', {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json"
+				},
+				body: JSON.stringify({
+					name: team.name,
+				})
+			})
+				.then(response => response.json())
+				.then(data => {
+					console.log(data);
+				})
+				.catch(error => {
+					console.error(error);
+				});
+		}
+
+		function invokePreviewTeam(team) {
+			fetch(`/Home/GetAllPlayers`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json"
+				},
+				body: JSON.stringify({
+					name: team.name,
+				})
+			})
+				.then(response => response.json())
+				.then(data => {
+					const playerNames = data.map(player => player.name);
+					alert("Team:" + team.name + "\n" + "Players:\n" + playerNames.join("\n"));
+				})
+				.catch(error => {
+					console.error('Error:', error);
+					alert('An error occurred while fetching players data.');
+				});
+		}
+
+		function invokeEditTeam(team) {
+			
+			document.getElementById("edit-team-form").style.display = "block";
+
+
+			document.getElementById("team-edit-form").addEventListener("submit", function (event) {
+				event.preventDefault(); 
+				var newTeamName = document.getElementById("team-namee").value;
+
+				fetch('/Home/UpdateTeam', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify({ teamId: team.teamId, name: newTeamName })
+				})
+					.then(response => response.json())
+					.then(data => {
+						alert("Team updated successfully: " + JSON.stringify(data));
+
+						document.getElementById("edit-team-form").style.display = "none";
+
+						displayTeams();
+					})
+					.catch(error => {
+						console.error('Error:', error);
+						alert('An error occurred while updating the team.');
+					});
+			});
+		}
+
+		///////////// PLAYERS
+
+		var players = [];
+
+		function fetchPlayers() {
+			fetch('/Home/FetchPlayers')
+				.then(response => response.json())
+				.then(data => {
+					players = data;
+					displayPlayers();
+				})
+				.catch(error => {
+					console.error('Error:', error);
+					alert('An error occurred while fetching players.');
+				});
+		}
+
+		function displayPlayers() {
+			var playersTable = document.getElementById("players-table-body");
+			playersTable.innerHTML = "";
+
+			players.forEach(player => {
+				var row = document.createElement("tr");
+
+				var nameCell = document.createElement("td");
+				nameCell.textContent = player.name;
+				row.appendChild(nameCell);
+
+				var teamCell = document.createElement("td");
+				teamCell.textContent = player.teamName;
+				row.appendChild(teamCell);
+
+				var actionsCell = document.createElement("td");
+				var editButton = document.createElement("button");
+				editButton.textContent = "Edit";
+				editButton.addEventListener("click", function () {
+
+					invokeEditPlayer(player);
+				});
+				actionsCell.appendChild(editButton);
+
+				var deleteButton = document.createElement("button");
+				deleteButton.textContent = "Delete";
+				deleteButton.addEventListener("click", function () {
+
+					invokeDeletePlayer(player);
+				});
+				actionsCell.appendChild(deleteButton);
+
+				var previewButton = document.createElement("button");
+				previewButton.textContent = "Preview";
+				previewButton.addEventListener("click", function () {
+
+					showPlayerPreview(player);
+				});
+				actionsCell.appendChild(previewButton);
+
+				row.appendChild(actionsCell);
+
+				playersTable.appendChild(row);
+			});
+		}
+
+
+
+		function showPlayerPreview(player) {
+			alert("Player Preview:\n Name: " + player.name + "\n Team: " + player.teamName);
+		}
+
+		fetchPlayers();
+
+		function showAddPlayerForm() {
+			document.getElementById("add-player-form").style.display = "block";
+		}
+
+		window.addEventListener('DOMContentLoaded', function () {
+			fetch('/Home/FetchTeams')
+				.then(response => response.json())
+				.then(data => {
+					var teamSelect = document.getElementById("team-select");
+					teamSelect.innerHTML = "";
+
+					data.forEach(team => {
+						var option = document.createElement("option");
+						option.value = team.id;
+						option.textContent = team.name;
+						teamSelect.appendChild(option);
+					});
+				})
+				.catch(error => {
+					console.error('Error:', error);
+					alert('An error occurred while retrieving the teams.');
+				});
+		});
+		function invokeDeletePlayer(player) {
+
+			fetch('/Home/DeletePlayer', {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json"
+				},
+				body: JSON.stringify({
+					name: player.name,
+				})
+			})
+				.then(response => response.json())
+				.then(data => {
+
+					console.log(data);
+				})
+				.catch(error => {
+
+					console.error(error);
+				});
+		}
+
+		function addPlayer() {
+			var playerNameInput = document.getElementById("player-name");
+			var teamSelect = document.getElementById("team-select");
+			var selectedTeamName = teamSelect.options[teamSelect.selectedIndex].text;
+
+
+
+			if (!playerNameInput.checkValidity() && playerTeamNameInput.checkValidity()) {
+
+				return;
+			}
+
+
+			var newPlayer = {
+				name: playerNameInput.value,
+				teamname: selectedTeamName,
+			};
+			fetch('/Home/AddPlayer', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify(newPlayer)
+			})
+				.then(response => response.json())
+				.then(data => {
+					alert("Player added successfully: " + JSON.stringify(data));
+
+					playerNameInput.value = "";
+					playerClubInput.value = "";
+
+					document.getElementById("add-player-form").style.display = "none";
+
+					displayPlayers();
+				})
+				.catch(error => {
+					console.error('Error:', error);
+				});
+		}
+
+		
+
+		function invokeEditPlayer(player) {
+		
+			document.getElementById("edit-player-form").style.display = "block";
+
+			fetch("/Home/FetchTeams") 
+				.then(response => response.json())
+				.then(data => {
+					const teamSelect = document.getElementById("team-selectt");
+					teamSelect.innerHTML = "";
+
+					data.forEach(team => {
+						const option = document.createElement("option");
+						option.value = team.id;
+						option.textContent = team.name;
+						teamSelect.appendChild(option);
+					});
+
+					const selectedTeamId = player.teamId;
+					teamSelect.value = selectedTeamId;
+				})
+				.catch(error => {
+					console.error('Error:', error);
+					alert('An error occurred while fetching teams data.');
+				});
+
+			document.getElementById("player-namee").textContent = player.name;
+		}
+
+
+		document.getElementById("save-player-btn").addEventListener("click", function () {
+			const playerNameInput = document.getElementById("player-namee").textContent;
+			var teamSelect = document.getElementById("team-selectt");
+			var selectedTeamName = teamSelect.options[teamSelect.selectedIndex].text; 
+
+
+
+			const updatedPlayer = {
+				name: playerNameInput,
+				teamName: selectedTeamName
+			};
+
+			fetch("/Home/UpdatePlayer", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json"
+				},
+				body: JSON.stringify(updatedPlayer)
+			})
+				.then(response => response.json())
+				.then(data => {
+					alert("Player updated successfully!");
+				})
+				.catch(error => {
+					console.error('Error:', error);
+					alert('An error occurred while updating the player.');
+				});
+		});
+
+
+		//			FIXTURES
+
+		function generateFixtures() {
+			fetch('/Home/GenerateFixtures', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({})
+			})
+				.then(response => {
+					if (response.ok) {
+						alert('Fixtures generated successfully!');
+					} else {
+						alert('Failed to generate fixtures.');
+					}
+				})
+				.catch(error => {
+					console.error('Error:', error);
+					alert('An error occurred while generating fixtures.');
+				});
+		}
+
+		var generateFixturesBtn = document.getElementById('generate-fixtures-btn');
+		generateFixturesBtn.addEventListener('click', generateFixtures);
+
+		function getFixtures() {
+			fetch('/Home/GetFixtures')
+				.then(response => response.json())
+				.then(data => {
+
+					renderFixtures(data);
+				})
+				.catch(error => {
+					console.error('Error:', error);
+					alert('An error occurred while fetching fixtures data.');
+				});
+		}
+
+		function renderFixtures(fixtures) {
+			var fixturesList = document.getElementById('fixtures-list');
+
+			fixturesList.innerHTML = '';
+
+			fixtures.forEach(fixture => {
+				var fixtureItem = document.createElement('div');
+				fixtureItem.classList.add('fixture-item');
+
+				var team1 = document.createElement('span');
+				team1.textContent = fixture.homeTeamName;
+
+				var team1Goals = document.createElement('span');
+				team1Goals.textContent = fixture.homeTeamGoals;
+
+				var team2Goals = document.createElement('span');
+				team2Goals.textContent = fixture.awayTeamGoals;
+
+				var team2 = document.createElement('span');
+				team2.textContent = fixture.awayTeamName;
+
+				var editButton = document.createElement("button");
+				editButton.textContent = "Edit";
+				editButton.addEventListener("click", function () {
+					updateFixtureGoals(fixture);
+				});
+
+				fixtureItem.appendChild(team1);
+				fixtureItem.appendChild(team1Goals);
+				fixtureItem.appendChild(team2Goals);
+				fixtureItem.appendChild(team2);
+				fixtureItem.appendChild(editButton);
+
+				fixturesList.appendChild(fixtureItem);
+			});
+		}
+
+		getFixtures();
+
+		function updateFixtureGoals(fixture) {
+			document.getElementById("edit-fixture-form").style.display = "block";
+			document.getElementById("fixture-edit-form").addEventListener("submit", function (event) {
+				event.preventDefault();
+
+				var newHomeGoals = document.getElementById("home-goals").value;
+				var newAwayGoals = document.getElementById("away-goals").value;
+
+				fetch('/Home/UpdateFixtureGoals', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify({
+						fixtureId: fixture.fixtureId,
+						homeTeamGoals: newHomeGoals,
+						awayTeamGoals: newAwayGoals,
+						homeTeamId: fixture.homeTeamId,
+						awayTeamId: fixture.awayTeamId,
+						homeTeamName: fixture.homeTeamName,
+						awayTeamName: fixture.awayTeamName,
+						id: fixture.id
+					})
+				})
+					.then(response => response.json())
+					.then(data => {
+					
+						alert("Fixture updated successfully: " + JSON.stringify(data));
+
+						
+						document.getElementById("edit-fixture-form").style.display = "none";
+
+						getFixtures();
+					})
+					.catch(error => {
+						console.error('Error:', error);
+						alert('An error occurred while updating the fixture.');
+					});
+			});
+		}
+
+		document.getElementById("fixture-edit-form").addEventListener("submit", updateFixtureGoals);
+
+
+
+	</script>
+</body>
+</html>
+<style>
+	.section {
+		display: none;
+	}
+
+	body {
+		font-family: Arial, sans-serif;
+	}
+
+	button {
+		padding: 10px 20px;
+		font-size: 16px;
+		background-color: #4285f4;
+		color: #fff;
+		border: none;
+		border-radius: 4px;
+		cursor: pointer;
+		margin-right: 10px;
+	}
+
+		button:hover {
+			background-color: #1a73e8;
+		}
+
+	.sign-out-btn {
+		background-color: transparent;
+	}
+
+		.sign-out-btn a {
+			color: #4285f4;
+			text-decoration: none;
+		}
+
+			.sign-out-btn a:hover {
+				text-decoration: underline;
+			}
+
+	.section {
+		margin-top: 20px;
+	}
+
+	#add-team-form {
+		margin-top: 10px;
+		display: none;
+	}
+
+		#add-team-form h3 {
+			font-size: 18px;
+			margin-bottom: 10px;
+		}
+
+	#new-team-form label {
+		display: block;
+		margin-bottom: 5px;
+	}
+
+	#new-team-form input[type="text"] {
+		width: 200px;
+		padding: 5px;
+		font-size: 14px;
+		border: 1px solid #ccc;
+		border-radius: 4px;
+	}
+
+	#new-team-form input[type="submit"] {
+		padding: 8px 16px;
+		font-size: 16px;
+		background-color: #4285f4;
+		color: #fff;
+		border: none;
+		border-radius: 4px;
+		cursor: pointer;
+		margin-top: 10px;
+	}
+
+		#new-team-form input[type="submit"]:hover {
+			background-color: #1a73e8;
+		}
+
+	.sign-out-btn {
+		position: absolute;
+		top: 10px;
+		right: 10px;
+	}
+
+	#players-table {
+		width: 100%;
+		border-collapse: collapse;
+		background-color: #f8f8f8;
+		border-radius: 10px;
+	}
+
+		#players-table th {
+			padding: 12px;
+			text-align: left;
+			background-color: #333333;
+			color: #ffffff;
+			font-weight: bold;
+		}
+
+		#players-table td {
+			padding: 12px;
+			border-bottom: 1px solid #dddddd;
+		}
+
+		#players-table tbody tr:last-child td {
+			border-bottom: none;
+		}
+
+		#players-table tbody tr:nth-child(even) {
+			background-color: #f2f2f2;
+		}
+
+	#teams-table {
+		width: 100%;
+		border-collapse: collapse;
+		background-color: #f8f8f8;
+		border-radius: 10px;
+	}
+
+		#teams-table th {
+			padding: 12px;
+			text-align: left;
+			background-color: #333333;
+			color: #ffffff;
+			font-weight: bold;
+		}
+
+		#teams-table td {
+			padding: 12px;
+			border-bottom: 1px solid #dddddd;
+		}
+
+		#teams-table tbody tr:last-child td {
+			border-bottom: none;
+		}
+
+
+		#teams-table tbody tr:nth-child(even) {
+			background-color: #f2f2f2;
+		}
+
+	button {
+		padding: 10px 20px;
+		font-size: 16px;
+		background-color: #4285f4;
+		color: #fff;
+		border: none;
+		border-radius: 4px;
+		cursor: pointer;
+		margin-right: 10px;
+	}
+
+		button:hover {
+			background-color: #1a73e8;
+		}
+
+	.section {
+		margin-top: 20px;
+	}
+
+	#add-player-form {
+		margin-top: 10px;
+		display: none;
+	}
+
+		#add-player-form h3 {
+			font-size: 18px;
+			margin-bottom: 10px;
+		}
+
+	#new-player-form label {
+		display: block;
+		margin-bottom: 5px;
+	}
+
+	#new-player-form input[type="text"],
+	#new-player-form select {
+		width: 200px;
+		padding: 5px;
+		font-size: 14px;
+		border: 1px solid #ccc;
+		border-radius: 4px;
+	}
+
+	#new-player-form input[type="submit"] {
+		padding: 8px 16px;
+		font-size: 16px;
+		background-color: #4285f4;
+		color: #fff;
+		border: none;
+		border-radius: 4px;
+		cursor: pointer;
+		margin-top: 10px;
+	}
+
+		#new-player-form input[type="submit"]:hover {
+			background-color: #1a73e8;
+		}
+
+	#fixtures-section {
+		padding: 20px;
+		background-color: #f2f2f2;
+		border-radius: 4px;
+	}
+
+		#fixtures-section h2 {
+			font-size: 24px;
+			margin-bottom: 10px;
+		}
+
+	.generate-fixtures {
+		display: flex;
+		justify-content: center;
+		margin-top: 20px;
+	}
+
+		.generate-fixtures button {
+			background-color: #007bff;
+			color: white;
+			border: none;
+			padding: 10px 20px;
+			font-size: 18px;
+			border-radius: 4px;
+			cursor: pointer;
+			transition: background-color 0.3s;
+		}
+
+			.generate-fixtures button:hover {
+				background-color: #0056b3;
+			}
+
+			.generate-fixtures button:focus {
+				outline: none;
+			}
+
+	#fixtures-section {
+		padding: 20px;
+		background-color: #f2f2f2;
+		border-radius: 4px;
+	}
+
+		#fixtures-section h2 {
+			font-size: 24px;
+			margin-bottom: 10px;
+		}
+
+	#fixtures-list {
+		margin-top: 20px;
+	}
+
+	.fixture-item {
+		display: flex;
+		justify-content: space-between;
+		padding: 10px;
+		background-color: #ffffff;
+		border-radius: 4px;
+		margin-bottom: 10px;
+	}
+
+		.fixture-item span {
+			font-size: 16px;
+		}
+
+</style>
